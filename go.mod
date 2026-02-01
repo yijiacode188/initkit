@@ -1,4 +1,4 @@
-module initkit
+module github.com/yijiacode188/initkit
 
 go 1.24.12
 
