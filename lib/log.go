@@ -2,7 +2,7 @@ package lib
 
 import (
 	"fmt"
-	dlog "initkit/log"
+	dlog "github.com/yijiacode188/initkit/log"
 	"strings"
 )
 

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"initkit/lib"
+	"github.com/yijiacode188/initkit/lib"
 	"io"
 	"net/http"
 	"net/url"

@@ -4,7 +4,6 @@ go 1.24.12
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.9.3
