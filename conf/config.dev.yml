@@ -1,0 +1,37 @@
+base:
+  time_location: Asia/Chongqing
+  local_ip: 192.168.1.27
+http:
+  addr: ":19888"
+  read_timeout: 10                   # 读取超时时长
+  write_timeout: 200                  # 写入超时时长
+  max_header_bytes: 20               # 最大的header大小，二进制位长度
+datasource:
+  - name: default
+    driver_name: mysql
+    data_source_name: root:123456@tcp(127.0.0.1:3306)/hello?charset=utf8mb4&parseTime=true&loc=Asia%2FChongqing
+    max_open_conn: 20
+    max_idle_conn: 10
+    max_conn_life_time: 100
+redis:
+  - name: default
+    addr: 127.0.0.1:6379
+    db: 1
+log:
+  log_level: trace #日志打印最低级别
+  file_writer:
+    on: true
+    log_path: "./logs/gin_scaffold.inf.log"
+    rotate_log_path: "./logs/gin_scaffold.inf.log.%Y%M%D%H"
+    wf_log_path: "./logs/gin_scaffold.wf.log"
+    rotate_wf_log_path: "./logs/gin_scaffold.wf.log.%Y%M%D%H"
+  console_writer: #工作台输出
+    on: false
+    color: true
+i18n:
+  path: ./conf/lang
+
+
+
+
+

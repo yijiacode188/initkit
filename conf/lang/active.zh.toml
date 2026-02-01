@@ -1,0 +1,84 @@
+[Unauthorized]
+    other="未授权"
+[Forbidden]
+    other = "禁止访问"
+[NotFound]
+    other = "未找到"
+[RequestTimeOut]
+    other = "请求超时"
+[InternalServerError]
+    other = "内部服务器错误"
+[BadGateway]
+    other = "错误网关"
+[ServiceUnavailable]
+    other = "暂停服务"
+[GatewayTimeOut]
+    other = "网关超时"
+[UNKNOWN]
+    other = "未知错误"
+[ParseError]
+    other = "解析错误"
+[NetWorkError]
+    other = "网络错误"
+[HttpError]
+    other = "协议错误"
+[SSLError]
+    other = "证书错误"
+[TimeoutError]
+    other = "连接超时"
+[passwordDiff]
+    other = "两次输入的密码不相同"
+[codeError]
+    other = "验证码错误"
+[poolError]
+    other = "数据库连接失败"
+[dataException]
+    other = "数据异常"
+[userRegister]
+    other = "当前账号已存在"
+[registerError]
+    other = "注册失败"
+[userNameError]
+    other = "账号只能是手机号或邮箱"
+[loadCodeParamsError]
+    other = "获取验证码的参数缺失"
+[verificationCode]
+    other = "验证码"
+[loadCodeError]
+    other = "获取验证码失败"
+[userNameOrPasswordError]
+    other = "账号或密码错误"
+[noPermission]
+    other = "没有权限"
+[incompleteParameters]
+    other = "参数不完整"
+[dataDuplication]
+    other = "数据重复"
+[modelDoesNotExit]
+    other = "当前型号不存在"
+[createImageError]
+    other = "生成图片失败"
+[senseVoiceError]
+    other = "语音识别失败"
+[accountDoesNotExit]
+    other = "账号不存在"
+[modifiedSuccessfully]
+    other = "修改成功"
+[emailOccupied]
+    other = "邮箱已被占用"
+[phoneOccupied]
+    other = "手机号已被占用"
+[bindSuccess]
+    other = "绑定成功"
+[closeAccountSuccess]
+    other = "注销账号成功"
+[modificationNotAllowed]
+    other = "不允许修改"
+[success]
+    other = "成功"
+[activateCodeError]
+    other = "激活码错误"
+[activateCodeUsed]
+    other = "激活码已使用过"
+[aiQuotaUsedUp]
+    other = "今日使用次数已达到上限"
