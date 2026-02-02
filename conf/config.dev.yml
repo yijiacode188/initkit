@@ -21,10 +21,10 @@ log:
   log_level: trace #日志打印最低级别
   file_writer:
     on: true
-    log_path: "./logs/gin_scaffold.inf.log"
-    rotate_log_path: "./logs/gin_scaffold.inf.log.%Y%M%D%H"
-    wf_log_path: "./logs/gin_scaffold.wf.log"
-    rotate_wf_log_path: "./logs/gin_scaffold.wf.log.%Y%M%D%H"
+    log_path: "./logs/initkit.inf.log"
+    rotate_log_path: "./logs/initkit.inf.log.%Y%M%D%H"
+    wf_log_path: "./logs/initkit.wf.log"
+    rotate_wf_log_path: "./logs/initkit.wf.log.%Y%M%D%H"
   console_writer: #工作台输出
     on: false
     color: true
