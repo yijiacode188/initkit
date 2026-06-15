@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm/utils"
 
 	// 数据库驱动 - 根据实际需要导入
-	_ "github.com/ClickHouse/clickhouse-go" // ClickHouse
+	//_ "github.com/ClickHouse/clickhouse-go" // ClickHouse
 	//_ "github.com/denisenkom/go-mssqldb"    // SQL Server
 	_ "github.com/go-sql-driver/mysql" // MySQL
 	_ "github.com/lib/pq"              // PostgreSQL
