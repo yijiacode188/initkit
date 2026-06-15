@@ -14,10 +14,10 @@ import (
 
 	// 数据库驱动 - 根据实际需要导入
 	_ "github.com/ClickHouse/clickhouse-go" // ClickHouse
-	_ "github.com/denisenkom/go-mssqldb"    // SQL Server
-	_ "github.com/go-sql-driver/mysql"      // MySQL
-	_ "github.com/lib/pq"                   // PostgreSQL
-	_ "github.com/mattn/go-sqlite3"         // SQLite
+	//_ "github.com/denisenkom/go-mssqldb"    // SQL Server
+	_ "github.com/go-sql-driver/mysql" // MySQL
+	_ "github.com/lib/pq"              // PostgreSQL
+	_ "github.com/mattn/go-sqlite3"    // SQLite
 
 	// GORM Dialectors
 	"gorm.io/driver/clickhouse"
