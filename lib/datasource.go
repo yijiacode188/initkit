@@ -5,15 +5,28 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"gorm.io/driver/mysql"
+	"time"
+
+	// GORM 驱动
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
-	"time"
+
+	// 数据库驱动 - 根据实际需要导入
+	_ "github.com/ClickHouse/clickhouse-go" // ClickHouse
+	_ "github.com/denisenkom/go-mssqldb"    // SQL Server
+	_ "github.com/go-sql-driver/mysql"      // MySQL
+	_ "github.com/lib/pq"                   // PostgreSQL
+	_ "github.com/mattn/go-sqlite3"         // SQLite
+
+	// GORM Dialectors
+	"gorm.io/driver/clickhouse"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
+	"gorm.io/driver/sqlserver"
 )
 
-var dbMapPool map[string]*sql.DB
 var gormMapPool map[string]*gorm.DB
 
 type datasourceConf struct {
@@ -36,42 +49,168 @@ func initDatasource() error {
 	if err != nil {
 		return err
 	}
-	dbMapPool = map[string]*sql.DB{}
 	gormMapPool = map[string]*gorm.DB{}
+
 	for _, item := range conf {
-
-		dbPool, err := sql.Open(item.DriverName, item.DataSourceName)
+		// 根据不同的数据库驱动，采用不同的初始化方式
+		var dbGorm *gorm.DB
+		switch item.DriverName {
+		case "mysql":
+			dbGorm, err = initMySQL(item)
+		case "postgres", "postgresql":
+			dbGorm, err = initPostgreSQL(item)
+		case "sqlite", "sqlite3":
+			dbGorm, err = initSQLite(item)
+		case "sqlserver", "mssql":
+			dbGorm, err = initSQLServer(item)
+		case "clickhouse":
+			dbGorm, err = initClickHouse(item)
+		default:
+			err = fmt.Errorf("不支持的数据库驱动: %s", item.DriverName)
+		}
 		if err != nil {
-			return err
-		}
-		dbPool.SetMaxOpenConns(item.MaxOpenConn)
-		dbPool.SetMaxIdleConns(item.MaxIdleConn)
-		dbPool.SetConnMaxLifetime(time.Duration(item.MaxConnLifeTime) * time.Second)
-		err = dbPool.Ping()
-		if err != nil {
-			return err
+			return fmt.Errorf("初始化数据库 %s 失败: %v", item.Name, err)
 		}
 
-		if item.DriverName == "mysql" {
-
-			//gorm连接方式
-			dbGorm, err := gorm.Open(mysql.New(mysql.Config{Conn: dbPool}), &gorm.Config{
-				Logger: &DefaultSqlGormLogger,
-			})
-			if err != nil {
-				return err
-			}
-			dbMapPool[item.Name] = dbPool
-			gormMapPool[item.Name] = dbGorm
-		}
+		gormMapPool[item.Name] = dbGorm
 	}
 	return nil
 }
-func GetDBPool(name string) (*sql.DB, error) {
-	if dbPool, ok := dbMapPool[name]; ok {
-		return dbPool, nil
+
+// initMySQL 初始化 MySQL 连接
+func initMySQL(conf datasourceConf) (*gorm.DB, error) {
+	// 方式1：使用连接池
+	dbPool, err := sql.Open("mysql", conf.DataSourceName)
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("get pool error")
+
+	setConnectionPool(dbPool, conf)
+
+	err = dbPool.Ping()
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	dbGorm, err := gorm.Open(mysql.New(mysql.Config{Conn: dbPool}), &gorm.Config{
+		Logger: &DefaultSqlGormLogger,
+	})
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	return dbGorm, nil
+}
+
+// initPostgreSQL 初始化 PostgreSQL 连接
+func initPostgreSQL(conf datasourceConf) (*gorm.DB, error) {
+	dbPool, err := sql.Open("postgres", conf.DataSourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	setConnectionPool(dbPool, conf)
+
+	err = dbPool.Ping()
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	dbGorm, err := gorm.Open(postgres.New(postgres.Config{Conn: dbPool}), &gorm.Config{
+		Logger: &DefaultSqlGormLogger,
+	})
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	return dbGorm, nil
+}
+
+// initSQLite 初始化 SQLite 连接
+func initSQLite(conf datasourceConf) (*gorm.DB, error) {
+	// SQLite 直接使用 DSN 字符串，不需要连接池
+	dbGorm, err := gorm.Open(sqlite.Open(conf.DataSourceName), &gorm.Config{
+		Logger: &DefaultSqlGormLogger,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// SQLite 可以通过设置连接池参数
+	if sqlDB, err := dbGorm.DB(); err == nil {
+		setConnectionPool(sqlDB, conf)
+	}
+
+	return dbGorm, nil
+}
+
+// initSQLServer 初始化 SQL Server 连接
+func initSQLServer(conf datasourceConf) (*gorm.DB, error) {
+	dbPool, err := sql.Open("sqlserver", conf.DataSourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	setConnectionPool(dbPool, conf)
+
+	err = dbPool.Ping()
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	dbGorm, err := gorm.Open(sqlserver.New(sqlserver.Config{Conn: dbPool}), &gorm.Config{
+		Logger: &DefaultSqlGormLogger,
+	})
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	return dbGorm, nil
+}
+
+// initClickHouse 初始化 ClickHouse 连接
+func initClickHouse(conf datasourceConf) (*gorm.DB, error) {
+	dbPool, err := sql.Open("clickhouse", conf.DataSourceName)
+	if err != nil {
+		return nil, err
+	}
+
+	setConnectionPool(dbPool, conf)
+
+	err = dbPool.Ping()
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	dbGorm, err := gorm.Open(clickhouse.New(clickhouse.Config{Conn: dbPool}), &gorm.Config{
+		Logger: &DefaultSqlGormLogger,
+	})
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	return dbGorm, nil
+}
+
+// setConnectionPool 设置连接池参数
+func setConnectionPool(dbPool *sql.DB, conf datasourceConf) {
+	if conf.MaxOpenConn > 0 {
+		dbPool.SetMaxOpenConns(conf.MaxOpenConn)
+	}
+	if conf.MaxIdleConn > 0 {
+		dbPool.SetMaxIdleConns(conf.MaxIdleConn)
+	}
+	if conf.MaxConnLifeTime > 0 {
+		dbPool.SetConnMaxLifetime(time.Duration(conf.MaxConnLifeTime) * time.Second)
+	}
 }
 
 func GetGormPool(name string) (*gorm.DB, error) {
@@ -81,17 +220,29 @@ func GetGormPool(name string) (*gorm.DB, error) {
 	return nil, errors.New("get pool error")
 }
 
-func closeDB() error {
-	for _, dbPool := range dbMapPool {
-		dbPool.Close()
+// 获取底层的 sql.DB 用于手动管理连接
+func GetSqlDB(name string) (*sql.DB, error) {
+	if dbPool, ok := gormMapPool[name]; ok {
+		sqlDB, err := dbPool.DB()
+		if err != nil {
+			return nil, err
+		}
+		return sqlDB, nil
 	}
-	dbMapPool = make(map[string]*sql.DB)
+	return nil, errors.New("get pool error")
+}
+
+func closeDB() error {
+	for _, dbGorm := range gormMapPool {
+		if sqlDB, err := dbGorm.DB(); err == nil {
+			sqlDB.Close()
+		}
+	}
 	gormMapPool = make(map[string]*gorm.DB)
 	return nil
 }
 
-// mysql 日志打印类型
-
+// 日志部分保持不变
 var DefaultSqlGormLogger = SqlGormLogger{
 	LogLevel:      logger.Info,
 	SlowThreshold: 200 * time.Millisecond,
@@ -103,34 +254,42 @@ type SqlGormLogger struct {
 }
 
 func (mgl *SqlGormLogger) LogMode(logLevel logger.LogLevel) logger.Interface {
-	mgl.LogLevel = logLevel
-	return mgl
+	newLogger := *mgl
+	newLogger.LogLevel = logLevel
+	return &newLogger
 }
 
 func (mgl *SqlGormLogger) Info(ctx context.Context, message string, values ...interface{}) {
-	//trace := GetTraceContext(ctx)
+	if mgl.LogLevel < logger.Info {
+		return
+	}
 	params := make(map[string]interface{})
 	params["message"] = message
 	params["values"] = fmt.Sprint(values)
 	//Log.TagInfo(trace, "_com_mysql_Info", params)
 }
+
 func (mgl *SqlGormLogger) Warn(ctx context.Context, message string, values ...interface{}) {
-	//trace := GetTraceContext(ctx)
+	if mgl.LogLevel < logger.Warn {
+		return
+	}
 	params := make(map[string]interface{})
 	params["message"] = message
 	params["values"] = fmt.Sprint(values)
 	//Log.TagInfo(trace, "_com_mysql_Warn", params)
 }
+
 func (mgl *SqlGormLogger) Error(ctx context.Context, message string, values ...interface{}) {
-	//trace := GetTraceContext(ctx)
+	if mgl.LogLevel < logger.Error {
+		return
+	}
 	params := make(map[string]interface{})
 	params["message"] = message
 	params["values"] = fmt.Sprint(values)
 	//Log.TagInfo(trace, "_com_mysql_Error", params)
 }
-func (mgl *SqlGormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
-	//trace := GetTraceContext(ctx)
 
+func (mgl *SqlGormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
 	if mgl.LogLevel <= logger.Silent {
 		return
 	}
@@ -145,6 +304,7 @@ func (mgl *SqlGormLogger) Trace(ctx context.Context, begin time.Time, fc func() 
 		"proc_time":       float64(elapsed.Milliseconds()),
 		"current_time":    currentTime,
 	}
+
 	switch {
 	case err != nil && mgl.LogLevel >= logger.Error && (!errors.Is(err, logger.ErrRecordNotFound)):
 		msg["err"] = err
@@ -163,7 +323,7 @@ func (mgl *SqlGormLogger) Trace(ctx context.Context, begin time.Time, fc func() 
 			msg["rows"] = rows
 			//Log.TagInfo(trace, "_com_mysql_success", msg)
 		}
-	case mgl.LogLevel == logger.Info:
+	case mgl.LogLevel >= logger.Info:
 		if rows == -1 {
 			//Log.TagInfo(trace, "_com_mysql_success", msg)
 		} else {
