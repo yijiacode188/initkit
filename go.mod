@@ -4,14 +4,11 @@ go 1.24.12
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/ClickHouse/clickhouse-go v1.5.4
-	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/lib/pq v1.12.3
-	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/nicksnyder/go-i18n/v2 v2.6.1
 	github.com/sony/sonyflake/v2 v2.2.0
 	github.com/spf13/viper v1.21.0
@@ -32,7 +29,6 @@ require (
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect

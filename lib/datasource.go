@@ -12,18 +12,8 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/utils"
 
-	// 数据库驱动 - 根据实际需要导入
-	//_ "github.com/ClickHouse/clickhouse-go" // ClickHouse
-	//_ "github.com/denisenkom/go-mssqldb"    // SQL Server
-	_ "github.com/go-sql-driver/mysql" // MySQL
-	_ "github.com/lib/pq"              // PostgreSQL
-	_ "github.com/mattn/go-sqlite3"    // SQLite
-
 	// GORM Dialectors
-	"gorm.io/driver/clickhouse"
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/driver/sqlite"
 	"gorm.io/driver/sqlserver"
 )
 
@@ -57,14 +47,10 @@ func initDatasource() error {
 		switch item.DriverName {
 		case "mysql":
 			dbGorm, err = initMySQL(item)
-		case "postgres", "postgresql":
-			dbGorm, err = initPostgreSQL(item)
-		case "sqlite", "sqlite3":
-			dbGorm, err = initSQLite(item)
+
 		case "sqlserver", "mssql":
 			dbGorm, err = initSQLServer(item)
-		case "clickhouse":
-			dbGorm, err = initClickHouse(item)
+
 		default:
 			err = fmt.Errorf("不支持的数据库驱动: %s", item.DriverName)
 		}
@@ -104,50 +90,6 @@ func initMySQL(conf datasourceConf) (*gorm.DB, error) {
 	return dbGorm, nil
 }
 
-// initPostgreSQL 初始化 PostgreSQL 连接
-func initPostgreSQL(conf datasourceConf) (*gorm.DB, error) {
-	dbPool, err := sql.Open("postgres", conf.DataSourceName)
-	if err != nil {
-		return nil, err
-	}
-
-	setConnectionPool(dbPool, conf)
-
-	err = dbPool.Ping()
-	if err != nil {
-		dbPool.Close()
-		return nil, err
-	}
-
-	dbGorm, err := gorm.Open(postgres.New(postgres.Config{Conn: dbPool}), &gorm.Config{
-		Logger: &DefaultSqlGormLogger,
-	})
-	if err != nil {
-		dbPool.Close()
-		return nil, err
-	}
-
-	return dbGorm, nil
-}
-
-// initSQLite 初始化 SQLite 连接
-func initSQLite(conf datasourceConf) (*gorm.DB, error) {
-	// SQLite 直接使用 DSN 字符串，不需要连接池
-	dbGorm, err := gorm.Open(sqlite.Open(conf.DataSourceName), &gorm.Config{
-		Logger: &DefaultSqlGormLogger,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// SQLite 可以通过设置连接池参数
-	if sqlDB, err := dbGorm.DB(); err == nil {
-		setConnectionPool(sqlDB, conf)
-	}
-
-	return dbGorm, nil
-}
-
 // initSQLServer 初始化 SQL Server 连接
 func initSQLServer(conf datasourceConf) (*gorm.DB, error) {
 	dbPool, err := sql.Open("sqlserver", conf.DataSourceName)
@@ -164,32 +106,6 @@ func initSQLServer(conf datasourceConf) (*gorm.DB, error) {
 	}
 
 	dbGorm, err := gorm.Open(sqlserver.New(sqlserver.Config{Conn: dbPool}), &gorm.Config{
-		Logger: &DefaultSqlGormLogger,
-	})
-	if err != nil {
-		dbPool.Close()
-		return nil, err
-	}
-
-	return dbGorm, nil
-}
-
-// initClickHouse 初始化 ClickHouse 连接
-func initClickHouse(conf datasourceConf) (*gorm.DB, error) {
-	dbPool, err := sql.Open("clickhouse", conf.DataSourceName)
-	if err != nil {
-		return nil, err
-	}
-
-	setConnectionPool(dbPool, conf)
-
-	err = dbPool.Ping()
-	if err != nil {
-		dbPool.Close()
-		return nil, err
-	}
-
-	dbGorm, err := gorm.Open(clickhouse.New(clickhouse.Config{Conn: dbPool}), &gorm.Config{
 		Logger: &DefaultSqlGormLogger,
 	})
 	if err != nil {
