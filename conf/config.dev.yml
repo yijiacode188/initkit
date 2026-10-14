@@ -8,15 +8,15 @@ http:
   max_header_bytes: 20               # 最大的header大小，二进制位长度
 datasource:
   - name: default
-    driver_name: mysql
-    data_source_name: root:123456@tcp(127.0.0.1:3306)/hello?charset=utf8mb4&parseTime=true&loc=Asia%2FChongqing
+    driver_name: sqllite
+    data_source_name: "./data.db"
     max_open_conn: 20
     max_idle_conn: 10
     max_conn_life_time: 100
-redis:
-  - name: default
-    addr: 127.0.0.1:6379
-    db: 1
+#redis:
+#  - name: default
+#    addr: 127.0.0.1:6379
+#    db: 1
 log:
   log_level: trace #日志打印最低级别
   file_writer:

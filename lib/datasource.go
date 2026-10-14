@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
+	"gorm.io/driver/sqlite"
 	"time"
-
 	// GORM 驱动
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -50,7 +51,8 @@ func initDatasource() error {
 
 		case "sqlserver", "mssql":
 			dbGorm, err = initSQLServer(item)
-
+		case "sqllite":
+			dbGorm, err = initSQLLite(item)
 		default:
 			err = fmt.Errorf("不支持的数据库驱动: %s", item.DriverName)
 		}
@@ -87,6 +89,32 @@ func initMySQL(conf datasourceConf) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	return dbGorm, nil
+}
+
+// initSQLLite 初始化SQLLite 连接
+func initSQLLite(conf datasourceConf) (*gorm.DB, error) {
+	// 方式1：使用连接池
+	dbPool, err := sql.Open("sqlite3", conf.DataSourceName)
+	if err != nil {
+		return nil, err
+	}
+	setConnectionPool(dbPool, conf)
+
+	err = dbPool.Ping()
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
+
+	dbGorm, err := gorm.Open(
+		sqlite.Dialector{Conn: dbPool},
+		&gorm.Config{Logger: &DefaultSqlGormLogger},
+	)
+	if err != nil {
+		dbPool.Close()
+		return nil, err
+	}
 	return dbGorm, nil
 }
 
