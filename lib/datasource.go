@@ -163,6 +163,9 @@ func GetGormPool(name string) (*gorm.DB, error) {
 	}
 	return nil, errors.New("get pool error")
 }
+func AddGormPool(name string, db *gorm.DB) {
+	gormMapPool[name] = db
+}
 
 // 获取底层的 sql.DB 用于手动管理连接
 func GetSqlDB(name string) (*sql.DB, error) {
