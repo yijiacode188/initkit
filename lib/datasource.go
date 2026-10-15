@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
+
 	_ "github.com/mattn/go-sqlite3"
 	"gorm.io/driver/sqlite"
-	"time"
 	// GORM 驱动
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -165,6 +166,9 @@ func GetGormPool(name string) (*gorm.DB, error) {
 }
 func AddGormPool(name string, db *gorm.DB) {
 	gormMapPool[name] = db
+}
+func RemoveGormPool(name string) {
+	delete(gormMapPool, name)
 }
 
 // 获取底层的 sql.DB 用于手动管理连接
